@@ -1,5 +1,7 @@
 .. sectnum::
 
+**Warning**: This project is currently in a documentation writing phase **before development**.
+
 Subdue: Your Programs Under Control
 ===================================
 
