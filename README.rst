@@ -500,6 +500,9 @@ The environment of subcommands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A subdue
+
+.. TODO talk about the subdue.script module, which is loaded with the info from environment
+
 Shell Completion
 ~~~~~~~~~~~~~~~~
 
