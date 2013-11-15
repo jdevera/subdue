@@ -34,5 +34,6 @@ setup(
         'Operating System :: POSIX',
         'Topic :: Utilities'
         ],
-    long_description=dump_sibling_file('README.rst')
+    long_description=dump_sibling_file('README.rst'),
+    test_suite='test'
     )
