@@ -39,3 +39,7 @@ nosetests.xml
 
 # Vim
 *.sw[op]
+
+# Project data
+.idea
+tags
