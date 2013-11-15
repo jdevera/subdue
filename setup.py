@@ -9,7 +9,10 @@ def dump_sibling_file(file_name):
 
 setup(
     name = 'subdue',
-    packages = ['subdue'],
+    packages = ['subdue',
+                'subdue.core',
+                'subdue.core.color',
+                ],
     version = '0.1.0',
     description = 'A framework to create commands with subcommands',
     author='Jacobo de Vera',
