@@ -1,4 +1,6 @@
 .. sectnum::
+.. image:: https://travis-ci.org/jdevera/subdue.png?branch=master
+    :target: https://travis-ci.org/jdevera/subdue
 
 **Warning**: This project is currently in a documentation writing phase **before development**.
 
