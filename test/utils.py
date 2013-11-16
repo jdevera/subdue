@@ -2,8 +2,15 @@ import unittest
 import sys
 import os
 import tempfile
-import StringIO
 import shutil
+
+PY3 = sys.version_info[0] >= 3
+
+if PY3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
+
 
 __unittest = None
 
@@ -15,11 +22,15 @@ class TextChecker(object):
         self.tc = testcase
 
     def matches(self, pattern):
-        self.tc.assertRegexpMatches(self.text, pattern)
+        assertRegex = getattr(self.tc, 'assertRegex',
+                              self.tc.assertRegexpMatches)
+        assertRegex(self.text, pattern)
         return self
 
     def not_matches(self, pattern):
-        self.tc.assertNotRegexpMatches(self.text, pattern)
+        assertNotRegex = getattr(self.tc, 'assertNotRegex',
+                                 self.tc.assertNotRegexpMatches)
+        assertNotRegex(self.text, pattern)
         return self
 
     def contains(self, pattern, times=None):
@@ -85,8 +96,8 @@ class OutStreamCapture(object):
     def __enter__(self):
         self._stdout = sys.stdout
         self._stderr = sys.stderr
-        sys.stdout = StringIO.StringIO()
-        sys.stderr = StringIO.StringIO()
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

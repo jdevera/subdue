@@ -163,6 +163,8 @@ def parse_args(argv):
     modify.add_flag("-f", "--fat", help="Turn this thin sub into a fat sub")
 
     args = parser.parse_args(argv[1:])
+    if args.subcommand is None:
+        parser.error("too few arguments")
 
     return args
 

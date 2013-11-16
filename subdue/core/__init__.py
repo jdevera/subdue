@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 import sys as _sys
-import color as _color
+from . import color as _color
 
 BANNER = """\
            _         _

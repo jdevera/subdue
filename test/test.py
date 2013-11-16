@@ -1,7 +1,7 @@
 import sys
 import os
 import subdue
-from utils import SubdueTestCase, TemporaryDirectory, OutStreamCheckedCapture
+from .utils import SubdueTestCase, TemporaryDirectory, OutStreamCheckedCapture
 
 class TestMain(SubdueTestCase):
 
