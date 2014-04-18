@@ -1,7 +1,10 @@
 import sys
 import os
 import subdue
+import subdue.core
+import subdue.sub
 from .utils import SubdueTestCase, TemporaryDirectory, OutStreamCheckedCapture
+import utils
 
 class TestMain(SubdueTestCase):
 
@@ -129,3 +132,57 @@ class TestMain(SubdueTestCase):
             self.assertEqual(driver_text, subdue.core.DEFAULT_DRIVER_CODE)
 
 
+class TestDriverMain(SubdueTestCase):
+
+
+    def test_vanilla_driver(self):
+        """
+        Call the driver function directly with no arguments
+        """
+        with OutStreamCheckedCapture(self) as cap:
+            subdue.sub.main([])
+        cap.stdout.contains("subdue help")
+
+    def test_top_level_launch_thin(self):
+        """
+        Launch a top level subcommand with the library
+        """
+        with TemporaryDirectory(cd=True) as d:
+            with OutStreamCheckedCapture(self):
+                subdue.main(['subdue', 'new', '--thin', 'mysub'])
+
+            sub_root = os.path.join(d, 'mysub')
+            utils.create_subcommand(sub_root, 'mycommand', """\
+                #!/bin/bash
+                echo "This is foo"
+                """)
+
+            caller = utils.SubprocessCaller()
+            with OutStreamCheckedCapture(self) as cap:
+                subdue.sub.main(['mycommand'],
+                                root_path=sub_root,
+                                command_runner=caller)
+            self.assertEqual(caller.returncode, 0)
+            cap.stdout.matches(r"^This is foo\n")
+
+
+    def test_top_level_launch_fat(self):
+        """
+        Launch a top level subcommand with the driver
+        """
+        with TemporaryDirectory(cd=True) as d:
+
+            with OutStreamCheckedCapture(self):
+                subdue.main(['subdue', 'new', 'mysub'])
+
+            sub_root = os.path.join(d, 'mysub')
+            utils.create_subcommand(sub_root, 'mycommand', """\
+                #!/bin/bash
+                echo "This is foo"
+                """)
+
+            with OutStreamCheckedCapture(self) as cap:
+                return_code = utils.call_driver(sub_root, ['mycommand'])
+
+            self.assertEqual(return_code, 0, cap)
+            cap.stdout.matches(r"^This is foo\n")

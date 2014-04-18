@@ -13,8 +13,6 @@ import stat
 from subdue import core
 
 
-
-
 REQUIRED_DIRECTORIES = [
     'commands',
     'lib',
@@ -48,8 +46,8 @@ def new(args):
     """
     check_sub_name(args.subname)
     print(core.color.bright_blue(core.BANNER))
-    print("Creating {0}sub '{1}'...\n".format(
-        'thin ' if args.thin else '', args.subname))
+    thin = 'thin ' if args.thin else ''
+    print("Creating {0}sub '{1}'...\n".format(thin, args.subname))
     root = os.path.abspath(args.subname)
     directories = REQUIRED_DIRECTORIES if args.thin else DIRECTORIES
 

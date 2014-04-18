@@ -3,6 +3,8 @@ import sys
 import os
 import tempfile
 import shutil
+import subprocess
+import textwrap
 
 PY3 = sys.version_info[0] >= 3
 
@@ -111,6 +113,12 @@ class OutStreamCapture(object):
         sys.stdout = self._stdout
         sys.stderr = self._stderr
 
+    def __unicode__(self):
+        return u"\n".join(['STDOUT:', unicode(self.stdout), 'STDERR:', unicode(self.stderr)])
+
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
+
 
 class OutStreamCheckedCapture(OutStreamCapture):
     """
@@ -170,4 +178,62 @@ class SubdueTestCase(unittest.TestCase):
             msg = self._formatMessage(msg,
                     "%s is not executable" % unittest.util.safe_repr(path))
             raise self.failureException(msg)
+
+
+def subprocess_call(args, **kwargs):
+    """
+    Capture friendly subprocess call.
+    When stdout and stderr are being captured, replaced by StringIO objects,
+    these cannot be passed to subprocess calls directly, since they expect a
+    real file.
+
+    So this pipes stdout and stderr and reads the contents after execution as a
+    string, writing it to whatever is set as sys.stdout and sys.stderr
+
+    This also works if sys.stdout and sys.stderr are not redirected
+    """
+
+    # If there is no redirection, just use "call" directly
+    if sys.stdout == sys.__stdout__ and sys.stderr == sys.__stderr__:
+        return subprocess.call(args, **kwargs)
+
+    kwargs['stdout'] = subprocess.PIPE
+    kwargs['stderr'] = subprocess.PIPE
+    proc = subprocess.Popen(args, **kwargs)
+    (stdout, stderr) = proc.communicate()
+    if stdout:
+        sys.stdout.write(stdout)
+    if stderr:
+        sys.stderr.write(stderr)
+
+    return proc.returncode
+
+class SubprocessCaller(object):
+    def __init__(self):
+        self.returncode = None
+    def __call__(self, args, **kwargs):
+        self.returncode = subprocess_call(args, **kwargs)
+
+
+def create_subcommand(sub_root, name, contents):
+    sub_command_file = os.path.join(sub_root, 'commands', 'mycommand')
+    with open(sub_command_file, 'w') as cmdfile:
+        cmdfile.write(textwrap.dedent(contents))
+    os.chmod(sub_command_file, 0700)
+
+def call_driver(sub_root, args=None, **kwargs):
+    if args is None:
+        args = []
+    sub_name = os.path.basename(sub_root)
+    sub_driver = os.path.join(sub_root, 'bin', sub_name)
+    env = kwargs.get('env', os.environ).copy()
+    subdue_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if 'PYTHONPATH' in env:
+        env['PYTHONPATH'] = ':'.join([env['PYTHONPATH'], subdue_path])
+    else:
+        env['PYTHONPATH'] = subdue_path
+    kwargs['env'] = env
+
+    return_code = subprocess_call([sub_driver] + args, **kwargs)
+    return return_code
 
