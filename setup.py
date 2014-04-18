@@ -17,6 +17,7 @@ setup(
     packages = ['subdue',
                 'subdue.core',
                 'subdue.core.color',
+                'subdue.sub',
                 ],
     version = '0.1.0',
     description = 'A framework to create commands with subcommands',
