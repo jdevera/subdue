@@ -188,5 +188,5 @@ class TestDriverMain(SubdueTestCase):
             with OutStreamCheckedCapture(self) as cap:
                 return_code = utils.call_driver(sub_root, ['mycommand'])
 
-            self.assertEqual(return_code, 0, cap)
+            self.assertEqual(return_code, 0, "Return code ({}) != expected ({}). Capture: {}".format(return_code, 0, cap))
             cap.stdout.matches(r"^This is foo\n")
