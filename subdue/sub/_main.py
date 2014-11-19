@@ -200,6 +200,9 @@ def die(error):
     sys.stderr.flush()
     sys.exit(1)
 
+def bool_to_rc(result):
+    return 0 if result else 1
+
 def main(argv=None, **kwargs):
     """
     Main entry point for a Subdue Sub.
@@ -230,11 +233,18 @@ def main(argv=None, **kwargs):
     # path_prepend(paths.bin)
 
     if len(argv) < 1 or argv[0] in ('-h', '--help'):
-        ret = command_help()
-        return 0 if ret else 1
+        return bool_to_rc(command_help())
 
+    sh_check_mode = argv[0] == '--is-sh'
+    if sh_check_mode:
+        argv.pop(0)
+
+    # TODO: Try internal command here
 
     command = find_command_path(argv, paths)
+    if sh_check_mode:
+        return bool_to_rc(command.found and command.found_with_sh)
+
     if not command.found:
         die("{0}: no such command `{1}'".format(paths.name, command.command))
 
