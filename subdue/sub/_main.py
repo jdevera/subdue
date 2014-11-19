@@ -54,21 +54,47 @@ class Command(object):
 
         self.tokens = tokens
         """ The tokens that make up the command, excluding the sub name """
+
         self.path = path
+        """ The path to the executable file for this command """
+
         self.is_sh = is_sh
+        """ True when the script was found by prepending the eval prefix to the
+        last token """
+
         self.arguments = arguments
+        """ The arguments to pass to the executable for this command """
 
         self.is_container = is_container
 
     def run_with(self, runner):
+        """
+        Execute this command with a given runner, which must take an array of
+        argv to run
+        """
         runner([self.path] + self.arguments)
 
     @property
+    def is_eval(self):
+        return self.tokens[-1].startswith('sh-')
+
+    def found_with_sh(self):
+        return self.is_sh
+
+    @property
     def found(self):
+        """
+        Some instances can be used to signal that a command was not found for
+        the given tokens. In such cases, the value of :found: is False.
+        Otherwise True.
+        """
         return self.path is not None
 
     @property
     def command(self):
+        """
+        The command, without arguments, as a string. Useful for error messages
+        """
         return ' '.join(self.tokens)
 
     @classmethod
