@@ -42,6 +42,70 @@ class SubPaths(object):
             """.format(self)
 
 
+class EnvProv(object):
+    def __init__(self, name, doc=None):
+        self.name = name
+
+    def __get__(self, obj, objtype):
+        return obj._get(self.name)
+
+    def __set__(self, obj, val):
+        obj._set(self.name, val)
+
+class Environment(object):
+
+    class SubVar(object):
+        def __init__(self, subname, name, value):
+            self.name = "_{subname}_{varname}".format(subname=subname, varname=name)
+            self.value = value
+        def __str__(self):
+            return "{self.name}={self.value}".format(self=self)
+
+    def __init__(self, paths):
+        self.subname_u = paths.name.upper()
+        self.vars = {}
+        self.path = os.environ['PATH'].split(':')
+
+        self.root = paths.root
+        self.is_eval = 0
+        self.command = ''
+
+    def prepend_to_path(self, path, immediate=False):
+        self.path.insert(0, path)
+        if immediate:
+            self._apply_path()
+
+    def append_to_path(self, path, immediate=False):
+        self.path.append(path)
+        if immediate:
+            self._apply_path()
+
+    def _apply_path(self):
+        new_path = ':'.join(self.path)
+        os.environ['PATH'] = new_path
+
+    def _set(self, name, value):
+        if value is not None:
+            value = compat.unicode(value)
+        self.vars[name.lower()] = Environment.SubVar(self.subname_u, name.upper(), value)
+
+    def _get(self, name):
+        return self.vars[name.lower()]
+
+    def __str__(self):
+        return ", ".join(("{0}:[{1.name}={1.value}]".format(k, v) for k,v in self.vars.iteritems()))
+
+
+    def save(self):
+        for var in compat.itervalues(self.vars):
+            os.environ[var.name] = var.value
+        self._apply_path()
+
+    command = EnvProv('command')
+    root = EnvProv('root')
+    is_eval = EnvProv('is_eval')
+
+
 class Command(object):
     """
     The representation of a user defined sub command.
@@ -227,10 +291,11 @@ def main(argv=None, **kwargs):
         argv = sys.argv[1:]
 
     paths = SubPaths(kwargs.get('root_path'))
+    env = Environment(paths)
     api_runner = kwargs.get('command_runner', execvp_runner)
 
-    # path_prepend(paths.lib)
-    # path_prepend(paths.bin)
+    # env.prepend_to_path(paths.lib)
+    # env.prepend_to_path(paths.bin)
 
     if len(argv) < 1 or argv[0] in ('-h', '--help'):
         return bool_to_rc(command_help())
@@ -252,6 +317,12 @@ def main(argv=None, **kwargs):
         # TODO: show container help and don't die
         die("{0}: can't run a container `{1}'".format(paths.name, command.command))
         return 1
+
+    if command.found_with_sh or command.is_eval:
+        env.is_eval = 1
+
+    env.command = command.command
+    env.save()
 
     command.run_with(api_runner)
 
