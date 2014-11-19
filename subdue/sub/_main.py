@@ -43,11 +43,22 @@ class SubPaths(object):
 
 
 class Command(object):
-    def __init__(self, tokens, path, is_sh, arguments):
+    """
+    The representation of a user defined sub command.
+
+    If found is False, then this is an empty placeholder that indicates a
+    searched command could not be found.
+
+    """
+    def __init__(self, tokens, path, is_sh, is_container, arguments):
+
         self.tokens = tokens
+        """ The tokens that make up the command, excluding the sub name """
         self.path = path
         self.is_sh = is_sh
         self.arguments = arguments
+
+        self.is_container = is_container
 
     def run_with(self, runner):
         runner([self.path] + self.arguments)
@@ -62,13 +73,18 @@ class Command(object):
 
     @classmethod
     def create_not_found(cls, tokens):
-        return cls(tokens, None, None, None)
+        """
+        Create a sentinel instance to signal that the command was not found for
+        a given set of tokens
+        """
+        return cls(tokens, None, None, None, None)
 
     def __repr__(self):
         if not self.found:
             return "subdue.sub.Command.create_not_found()"
-        return ( "subdue.sub.Command(tokens={0.tokens}, path='{0.path}', "
-                 "is_sh={0.is_sh}, arguments={0.arguments})".format(self) )
+        return ("subdue.sub.Command(tokens={0.tokens}, path='{0.path}', "
+                "is_sh={0.is_sh}, is_dir={o.is_dir}, "
+                "arguments={0.arguments})".format(self))
 
 
 
@@ -78,14 +94,14 @@ def mkcmd(command, sh_flag=False):
     """
     return "sh-%s" % command if sh_flag else command
 
-def find_command_path(argv, paths, start_dir = None):
+def find_command_path(argv, paths, start_dir=None):
     """
     Given a command line with tokens representing both the subcommand structure
     and eventually the arguments for a command, figure out the path to the
     command and extract the items from the command line that are to be passed
     as parameters of that command.
 
-    Returns a tuple with the following:
+    Returns a Command object, which contains:
         * The full path to the command, which can be either a file or a
           directory. This will be None if the command cannot be found.
         * A list of the tokens that lead up to the command, not including the
@@ -105,13 +121,16 @@ def find_command_path(argv, paths, start_dir = None):
         # the container that has been built so far.
         if token[0] == '-':
             break
+
         command.append(token)
         possible_path = os.path.join(running_path, token)
+        is_dir = False
 
-        # If the current token is part of the path but no the script, just add
-        # to running path and keep looking.
+        # If the current token is part of the path but it is not the script
+        # itself, just add to running path and keep looking.
         if os.path.isdir(possible_path):
             running_path = possible_path
+            is_dir = True
             continue
 
         # But if the current token is the script, set the path and return.
@@ -129,10 +148,9 @@ def find_command_path(argv, paths, start_dir = None):
         # Otherwise, we have a token that is not a directory and appears before
         # the script is found. This is an error. Make sure we still return the
         # command, so it can be shown in the error.
-        # return (None, command, None, None)
         return Command.create_not_found(command)
 
-    return Command(command, running_path, is_sh, argv[shift+1:])
+    return Command(command, running_path, is_sh, is_dir, argv[shift+1:])
 
 def path_prepend(directory):
     """
@@ -180,7 +198,7 @@ def main(argv=None, **kwargs):
         argv = sys.argv[1:]
 
     paths = SubPaths(kwargs.get('root_path'))
-    runner = kwargs.get('command_runner', execvp_runner)
+    api_runner = kwargs.get('command_runner', execvp_runner)
 
     # path_prepend(paths.lib)
     # path_prepend(paths.bin)
@@ -193,5 +211,11 @@ def main(argv=None, **kwargs):
     command = find_command_path(argv, paths)
     if not command.found:
         die("{0}: no such command `{1}'".format(paths.name, command.command))
-    command.run_with(runner)
+
+    if command.is_container:
+        # TODO: show container help and don't die
+        die("{0}: can't run a container `{1}'".format(paths.name, command.command))
+        return 1
+
+    command.run_with(api_runner)
 
