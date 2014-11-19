@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import unittest
 import sys
 import os
@@ -6,18 +10,13 @@ import shutil
 import subprocess
 import textwrap
 
-PY3 = sys.version_info[0] >= 3
-
-if PY3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
-
+from subdue.core import compat
 
 __unittest = None
 
 
-class TextChecker(object):
+
+class TextChecker(compat.UnicodeMixin):
 
     def __init__(self, testcase, text):
         self.text = text
@@ -57,9 +56,6 @@ class TextChecker(object):
     def __unicode__(self):
         return self.text
 
-    def __str__(self):
-        return self.__unicode__().encode('utf-8')
-
 
 class TemporaryDirectory(object):
     """
@@ -83,7 +79,7 @@ class TemporaryDirectory(object):
         shutil.rmtree(self.name)
 
 
-class OutStreamCapture(object):
+class OutStreamCapture(compat.UnicodeMixin):
     """
     A context manager to replace stdout and stderr with StringIO objects and
     cache all output.
@@ -98,8 +94,8 @@ class OutStreamCapture(object):
     def __enter__(self):
         self._stdout = sys.stdout
         self._stderr = sys.stderr
-        sys.stdout = StringIO()
-        sys.stderr = StringIO()
+        sys.stdout = compat.StringIO()
+        sys.stderr = compat.StringIO()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -114,10 +110,13 @@ class OutStreamCapture(object):
         sys.stderr = self._stderr
 
     def __unicode__(self):
-        return u"\n".join(['STDOUT:', unicode(self.stdout), 'STDERR:', unicode(self.stderr)])
+        return "\n".join([
+            'STDOUT:',
+            compat.unicode(self.stdout),
+            'STDERR:',
+            compat.unicode(self.stderr)
+            ])
 
-    def __str__(self):
-        return self.__unicode__().encode('utf-8')
 
 
 class OutStreamCheckedCapture(OutStreamCapture):
@@ -202,9 +201,9 @@ def subprocess_call(args, **kwargs):
     proc = subprocess.Popen(args, **kwargs)
     (stdout, stderr) = proc.communicate()
     if stdout:
-        sys.stdout.write(stdout)
+        sys.stdout.write(stdout.decode('utf8'))
     if stderr:
-        sys.stderr.write(stderr)
+        sys.stderr.write(stderr.decode('utf8'))
 
     return proc.returncode
 
@@ -219,7 +218,7 @@ def create_subcommand(sub_root, name, contents):
     sub_command_file = os.path.join(sub_root, 'commands', 'mycommand')
     with open(sub_command_file, 'w') as cmdfile:
         cmdfile.write(textwrap.dedent(contents))
-    os.chmod(sub_command_file, 0700)
+    os.chmod(sub_command_file, 448) # 0700, for python 2.7 vs 3.X compat
 
 def call_driver(sub_root, args=None, **kwargs):
     if args is None:

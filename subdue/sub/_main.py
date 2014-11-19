@@ -1,6 +1,14 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import os
 import sys
 import inspect
+
+from subdue.core import compat
 
 class SubPaths(object):
     def __init__(self, root=None):
@@ -51,11 +59,11 @@ class Command(object):
 
 
 
-def mkcmd(command, sh_flag = False):
+def mkcmd(command, sh_flag=False):
     """
     Return a string with the name of a command in this sub.
     """
-    return u"sh-%s" % command if sh_flag else unicode(command)
+    return "sh-%s" % command if sh_flag else command
 
 def find_command_path(argv, paths, start_dir = None):
     """
@@ -117,10 +125,10 @@ def path_prepend(directory):
     """
     Add a given directory to the beginning of the PATH environment variable.
     """
-    os.environ['PATH'] = u"%s:%s" % (directory, os.environ['PATH'] )
+    os.environ['PATH'] = ":".join((directory, os.environ['PATH']))
 
 def command_help():
-    print "subdue help"
+    print ("subdue help")
     return True
 
 def execvp_runner(args):
