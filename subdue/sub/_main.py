@@ -13,12 +13,25 @@ from subdue.core import compat
 class SubPaths(object):
     def __init__(self, root=None):
         # print __file__
-        calling_script = inspect.stack()[-1][1]
+        calling_script = self._find_calling_script()
         self.name = os.path.basename(calling_script)
         self.bin = os.path.dirname(os.path.abspath(calling_script))
         self.root = os.path.dirname(self.bin) if root is None else root
         self.commands = os.path.join(self.root, 'commands')
         self.lib = os.path.join(self.root, 'lib')
+
+    @staticmethod
+    def _find_calling_script():
+        """
+        Inspect the calls stack to determine the path to the script that is
+        calling this in the first place.
+        """
+        # In cPython, the bottom of the callstack has the main script, but in
+        # pypy, app_main.py appears in the first three levels.
+        for record in reversed(inspect.stack()):
+            if record[1] != 'app_main.py':
+                return record[1]
+
 
     def __repr__(self):
         return """
