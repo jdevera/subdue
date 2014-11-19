@@ -1,10 +1,8 @@
 __all__ = [
-    'color',
     'BANNER',
     'DEFAULT_DRIVER_CODE'
     'die',
     'verbose',
-    'use_colors',
     'set_color_policy',
 ]
 
