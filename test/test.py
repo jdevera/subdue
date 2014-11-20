@@ -167,6 +167,7 @@ class TestDriverMain(SubdueTestCase):
                                 root_path=sub_root,
                                 command_runner=caller,
                                 exit=False)
+            self.assertIsNotNone(caller.returncode, "No command was called. {}".format(cap))
             self.assertEqual(caller.returncode, 0)
             cap.stdout.matches(r"^This is foo\n")
 
@@ -191,3 +192,43 @@ class TestDriverMain(SubdueTestCase):
 
             self.assertEqual(return_code, 0, "Return code ({}) != expected ({}). Capture: {}".format(return_code, 0, cap))
             cap.stdout.matches(r"^This is foo\n")
+
+
+class TestDriverOptions(SubdueTestCase):
+
+    def _checkEval(self, sub_root, expected_rc, command):
+        with OutStreamCheckedCapture(self) as cap:
+            return_code = utils.call_driver(sub_root, ['--is-eval', command])
+
+        self.assertEqual(return_code, expected_rc,
+                "--is-eval returned {} for command {}, but expected {}. Capture: {}".format(
+                    return_code, command, expected_rc, cap))
+        cap.stdout.is_empty()
+
+    def assertIsEval(self, sub_root, command):
+        return self._checkEval(sub_root, 0, command)
+
+    def assertIsNotEval(self, sub_root, command):
+        return self._checkEval(sub_root, 1, command)
+
+    def test_is_eval(self):
+        subname = 'evalsub'
+        with TemporaryDirectory(cd=True) as d:
+
+            with OutStreamCheckedCapture(self):
+                subdue.main(['subdue', 'new', subname])
+
+            sub_root = os.path.join(d, subname)
+            utils.create_subcommand(sub_root, 'sh-eval', """\
+                #!/bin/bash
+                echo "This is my eval command"
+                """)
+            utils.create_subcommand(sub_root, 'foobar', """\
+                #!/bin/bash
+                echo "This is my regular command"
+                """)
+
+            self.assertIsEval(sub_root, 'eval')
+            self.assertIsNotEval(sub_root, 'sh-eval')
+            self.assertIsNotEval(sub_root, 'foobar')
+

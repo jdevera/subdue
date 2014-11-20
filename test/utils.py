@@ -53,6 +53,9 @@ class TextChecker(compat.UnicodeMixin):
         self.tc.assertNotIn(pattern, self.text)
         return self
 
+    def is_empty(self):
+        return self.matches(r'^$')
+
     def __unicode__(self):
         return self.text
 
