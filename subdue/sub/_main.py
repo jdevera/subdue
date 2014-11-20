@@ -203,6 +203,7 @@ def find_command_path(argv, paths, start_dir=None):
     shift = 0
     command = []
     is_sh = False
+    is_dir = False
     for (shift, token) in enumerate(argv):
 
         # If we still have not resolved the script name and we are already
