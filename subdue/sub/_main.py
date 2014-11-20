@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import os
 import sys
 import inspect
+import argparse
 
 from subdue.core import compat
 
@@ -264,6 +265,17 @@ def bool_to_rc(result):
     return 0 if result else 1
 
 def main(argv=None, **kwargs):
+
+def parse_args(argv):
+    """ Parse and validate command line arguments """
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--is-eval", action='store_true')
+    parser.add_argument("-h", "--help", action='store_true')
+    parser.add_argument("args", nargs=argparse.REMAINDER)
+
+    args = parser.parse_args(argv)
+
+    return args
     """
     Main entry point for a Subdue Sub.
 
@@ -285,6 +297,10 @@ def main(argv=None, **kwargs):
     """
     if argv is None:
         argv = sys.argv[1:]
+    args = parse_args(argv)
+
+    if args.help or not args.args:
+        return bool_to_rc(command_help())
 
     paths = SubPaths(kwargs.get('root_path'))
     env = Environment(paths)
@@ -293,17 +309,10 @@ def main(argv=None, **kwargs):
     # env.prepend_to_path(paths.lib)
     # env.prepend_to_path(paths.bin)
 
-    if len(argv) < 1 or argv[0] in ('-h', '--help'):
-        return bool_to_rc(command_help())
-
-    sh_check_mode = argv[0] == '--is-sh'
-    if sh_check_mode:
-        argv.pop(0)
-
     # TODO: Try internal command here
 
-    command = find_command_path(argv, paths)
-    if sh_check_mode:
+    command = find_command_path(args.args, paths)
+    if args.is_eval:
         return bool_to_rc(command.found and command.found_with_sh)
 
     if not command.found:
