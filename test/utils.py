@@ -215,7 +215,7 @@ class SubprocessCaller(object):
 
 
 def create_subcommand(sub_root, name, contents):
-    sub_command_file = os.path.join(sub_root, 'commands', 'mycommand')
+    sub_command_file = os.path.join(sub_root, 'commands', name)
     with open(sub_command_file, 'w') as cmdfile:
         cmdfile.write(textwrap.dedent(contents))
     os.chmod(sub_command_file, 448) # 0700, for python 2.7 vs 3.X compat
