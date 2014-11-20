@@ -255,15 +255,6 @@ def command_help():
 def execvp_runner(args):
     os.execvp(args[0], args)
 
-def die(error):
-    """
-    Show message on stderr and exit
-    """
-    sys.stderr.write(error)
-    sys.stderr.write("\n")
-    sys.stderr.flush()
-    sys.exit(1)
-
 def bool_to_rc(result):
     return 0 if result else 1
 
@@ -311,11 +302,11 @@ def main(argv=None, **kwargs):
         return bool_to_rc(command.found and command.found_with_sh)
 
     if not command.found:
-        die("{0}: no such command `{1}'".format(paths.name, command.command))
+        sys.exit("{0}: no such command `{1}'".format(paths.name, command.command))
 
     if command.is_container:
         # TODO: show container help and don't die
-        die("{0}: can't run a container `{1}'".format(paths.name, command.command))
+        sys.exit("{0}: can't run a container `{1}'".format(paths.name, command.command))
         return 1
 
     if command.found_with_sh or command.is_eval:
