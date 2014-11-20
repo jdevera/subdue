@@ -262,9 +262,8 @@ def execvp_runner(args):
     os.execvp(args[0], args)
 
 def bool_to_rc(result):
-    return 0 if result else 1
+    sys.exit(0 if result else 1)
 
-def main(argv=None, **kwargs):
 
 def parse_args(argv):
     """ Parse and validate command line arguments """
@@ -276,6 +275,8 @@ def parse_args(argv):
     args = parser.parse_args(argv)
 
     return args
+
+def do_main(argv=None, **kwargs):
     """
     Main entry point for a Subdue Sub.
 
@@ -330,4 +331,18 @@ def parse_args(argv):
     env.save()
 
     command.run_with(api_runner)
+
+
+def main(argv=None, **kwargs):
+    api_exit = kwargs.get('exit', True)
+    if api_exit:
+        # If exit is called, this will result in death of the process.
+        # Additionally, exit with anything that do_main returns
+        sys.exit(do_main(argv, **kwargs))
+    else:
+        # Don't exit, return the SystemExit exception instead
+        try:
+            return do_main(argv, **kwargs)
+        except SystemExit as se:
+            return se
 

@@ -144,7 +144,7 @@ class TestDriverMain(SubdueTestCase):
         Call the driver function directly with no arguments
         """
         with OutStreamCheckedCapture(self) as cap:
-            subdue.sub.main([])
+            subdue.sub.main([], exit=False)
         cap.stdout.contains("subdue help")
 
     def test_top_level_launch_thin(self):
@@ -165,7 +165,8 @@ class TestDriverMain(SubdueTestCase):
             with OutStreamCheckedCapture(self) as cap:
                 subdue.sub.main(['mycommand'],
                                 root_path=sub_root,
-                                command_runner=caller)
+                                command_runner=caller,
+                                exit=False)
             self.assertEqual(caller.returncode, 0)
             cap.stdout.matches(r"^This is foo\n")
 
