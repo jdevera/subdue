@@ -142,6 +142,7 @@ class Command(object):
     def is_eval(self):
         return self.tokens[-1].startswith('sh-')
 
+    @property
     def found_with_sh(self):
         return self.is_sh
 
@@ -172,8 +173,11 @@ class Command(object):
     def __repr__(self):
         if not self.found:
             return "subdue.sub.Command.create_not_found()"
-        return ("subdue.sub.Command(tokens={0.tokens}, path='{0.path}', "
-                "is_sh={0.is_sh}, is_dir={o.is_dir}, "
+        return ("subdue.sub.Command(tokens={0.tokens}, "
+                "path='{0.path}', "
+                "is_eval={0.is_eval}, "
+                "found_with_sh={0.found_with_sh}, "
+                "is_container={0.is_container}, "
                 "arguments={0.arguments})".format(self))
 
 
