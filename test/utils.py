@@ -229,10 +229,7 @@ def call_driver(sub_root, args=None, **kwargs):
     # Get the environment and add the subdue path to the PYTHONPATH
     env = kwargs.get('env', os.environ).copy()
     subdue_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    if 'PYTHONPATH' in env:
-        env['PYTHONPATH'] = ':'.join([env['PYTHONPATH'], subdue_path])
-    else:
-        env['PYTHONPATH'] = subdue_path
+    env['PYTHONPATH'] = ':'.join([env.get('PYTHONPATH', ''), subdue_path])
     kwargs['env'] = env
 
     return_code = subprocess_call([sub_driver] + args, **kwargs)
