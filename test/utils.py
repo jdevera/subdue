@@ -10,7 +10,9 @@ import shutil
 import subprocess
 import textwrap
 
+import subdue
 from subdue.core import compat
+from .compat import which
 
 __unittest = None
 
@@ -82,6 +84,7 @@ class TemporaryDirectory(object):
         shutil.rmtree(self.name)
 
 
+
 class OutStreamCapture(compat.UnicodeMixin):
     """
     A context manager to replace stdout and stderr with StringIO objects and
@@ -141,6 +144,68 @@ class OutStreamCheckedCapture(OutStreamCapture):
                 exc_type, exc_val, exc_tb)
         self.stdout = TextChecker(self.tc, self.stdout)
         self.stderr = TextChecker(self.tc, self.stderr)
+
+class TempSub(TemporaryDirectory):
+
+    class Sub(object):
+
+        class OutCapture(OutStreamCheckedCapture):
+            def __init__(self, parent):
+                super(TempSub.Sub.OutCapture, self).__init__(parent.testcase)
+                self.sub_root = parent.sub_root
+                self.name = parent.name
+                self.testcase = parent.testcase
+                self.return_code = None
+                self.command = None
+
+            def assertSucess(self, msg=None):
+                self.testcase.assertEqual(self.return_code, 0,
+                    msg if msg is not None else 'Expected success (rc = 0) but failed with rc: {}'.format(self.return_code))
+                return self
+
+            def assertFailure(self, msg=None):
+                self.testcase.assertNotEqual(self.return_code, 0,
+                    msg if msg is not None else 'Expected failure (rc = 0) but succeeded with rc: {}'.format(self.return_code))
+                return self
+
+        class Command(object):
+            def __init__(self, parent, command):
+                self.command = list(command.split('/'))
+                self.sub = parent
+
+            def run_it(self, *args):
+                return self.sub.run(*(self.command + list(args)))
+
+
+        def __init__(self, parent):
+            self.sub_root = parent.subroot
+            self.name = parent.subname
+            self.testcase = parent.testcase
+
+        def create_subcommand(self, name, interpreter='sh', contents=''):
+            create_subcommand(self.sub_root, name, contents, interpreter)
+            return TempSub.Sub.Command(self, name)
+
+        def run(self, *args):
+            with TempSub.Sub.OutCapture(self) as cap:
+                rc = call_driver(self.sub_root, list(args))
+            cap.return_code = rc
+            cap.command = args
+            return cap
+
+    def __init__(self, testcase, name, thin=False):
+        super(TempSub, self).__init__(cd=True)
+        self.testcase = testcase
+        self.subname = name
+        self.subroot = os.path.join(self.name, self.subname)
+
+    def __enter__(self):
+        super(TempSub, self).__enter__()
+        with OutStreamCapture():
+            subdue.main(['subdue', 'new', self.subname])
+        return TempSub.Sub(self)
+
+
 
 
 class SubdueTestCase(unittest.TestCase):
@@ -217,10 +282,19 @@ class SubprocessCaller(object):
         self.returncode = subprocess_call(args, **kwargs)
 
 
-def create_subcommand(sub_root, name, contents):
-    sub_command_file = os.path.join(sub_root, 'commands', name)
+def create_subcommand(sub_root, name, contents, interpreter=None):
+    contents = textwrap.dedent(contents)
+    if interpreter is not None:
+        interp_path = which(interpreter)
+        contents = '#!{}\n{}\n'.format(interp_path, contents)
+
+    name_parts = name.split('/')
+    sub_command_file = os.path.join(sub_root, 'commands', *name_parts)
+    sub_command_dir = os.path.dirname(sub_command_file)
+    if not os.path.exists(sub_command_dir):
+        os.makedirs(sub_command_dir)
     with open(sub_command_file, 'w') as cmdfile:
-        cmdfile.write(textwrap.dedent(contents))
+        cmdfile.write(contents)
     os.chmod(sub_command_file, 448) # 0700, for python 2.7 vs 3.X compat
 
 def call_driver(sub_root, args=None, **kwargs):
