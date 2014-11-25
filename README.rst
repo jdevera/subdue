@@ -456,6 +456,42 @@ Shell Completion
 
 Subdue provides shell completion at the driver level out of the box. This means that after it has been set up correctly, a sub can get subcommand names autocompleted in the shell.
 
+But the completion capabilities do not end there. Subdue allows you to easily provide completion also for the parameters of subcommand scripts.
+
+First, Subdue must know whether your script can provide its own completion information. This is achieved by including a line like this in the subcommand script::
+
+    # -*- Provide subdue completion -*-
+
+The ``#`` character is just an example, since it's the one used by many scripting languages to introduce line comments. Subdue will match starting at the first ``-*-`` marker and will make sure that the last ``-*-`` marker appears at the end of the line. Only spaces might appear afterwards.
+
+Of course, if the command is a compiled binary, it's of no use to include such line on its code; Subdue will not be able to determine this from the binary. For such cases, subdue provides an alternative: If your command is called ``foo``, create a file called ``foo.subduecompleter``. The existence of this file lets Subdue know that ``foo`` offers completion.
+
+Once Subdue has determined that the subcommand can generate its own completion information, it will run it with the ``--subdue-complete`` flag to obtain the actual completion information. A script that declares itself a **completion provider** must handle this flag. Anything the script puts out in standard output will be tokenised and used as possible completions.
+
+If the provision of completion information was declared through a ``.subduecompleter`` file, and this file is executable, then this file will be exeuted instead of ``foo`` to generate the completions. However, this one will not receive the ``--subdue-complete`` flag. Thus, the simplest passthrough completer script would be::
+
+    #!bin/sh
+    exec $_SUBDUE_PATH_COMMAND_ --complete "$@"
+
+But, of course, since no content examination is done in this case, the completer could also be a binary.
+
+Note that, when the .subduecompleter file is run, the values of the environment variables ``_SUB_COMMAND_`` and ``_SUB_PATH_COMMAND_`` correspond to that of the command itself, not the completer script.
+
+In order to allow the script to create more intelligent completions, all the parameters in the current command line being completed will be passed verbatim to the command after the ``--subdue-complete`` flag.
+
+In order to diferentiate between the two cases below, where the caret ``^`` indicates the position of the cursor when hitting tab for completion::
+
+  exa dothis --p
+                ^
+
+  exa dothis --p
+                 ^
+
+Subdue will pass an empty string as the last argument in the second invokation. The command author can choose to ignore this.
+
+.. It would be great if womehow one could reuse existing completion functionaity ffrom the shell. For instance, if my subcommand is a symlink to ls, it wouldideally use ls's completion.
+
+
 Notable differences with other subcommand based commands
 --------------------------------------------------------
 
