@@ -303,7 +303,7 @@ def do_main(argv=None, **kwargs):
     if args.help or not args.args:
         return bool_to_rc(command_help())
 
-    paths = SubPaths(kwargs.get('root_path'))
+    paths = SubPaths(kwargs.get('sub_path'))
     env = Environment(paths)
     api_runner = kwargs.get('command_runner', execvp_runner)
 
