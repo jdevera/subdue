@@ -390,10 +390,38 @@ The behaviour of the help command is highly configurable. The following *switche
 The eval-command feature
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The environment of subcommands    
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+With the commands of a sub, there exist the same limitation as with running any other script: The script cannot change the state of the current running shell, e.g., change directories, export environment variables for subsequent commands, etc. When this functionality is needed, one must resort to shell functions or aliases.
 
-A subdue
+Subdue provides a way for subcommands to modify the shell, by turning those commands into something like a shell function. You could do something like::
+
+  $ exa gohome
+
+And have your shell change directories to your home.
+
+When you initialise the sub with the ``init`` built-in subcommand, it registers a shell function with the name of your sub that will relay all calls to the sub driver. However, for some subcommands, it will capture their output and eval it!.
+
+These commands are called **eval commands**. A prefix in the file name of a command (by default ``sh-``) indicates that such command is an eval command. This prefix is not exposed by the driver:
+
+In the example above, ``gohome`` would be a script under ``exa/commands/sh-gohome`` (note the ``sh-`` prefix) which would contain::
+
+    #!/bin/sh
+    echo "cd ~"
+
+Running this as::
+
+    $ exa sh-gohome
+
+Would just print ``cd ~`` on your shell. However, when run without the prefix as in the example further up, this shell function finds out that **it had to add the prefix** to find the command and then it will run it and evaluate its output. This information is also available to the command script itself in the form of an environment variable.
+
+.. TODO document this environment variable
+
+The issue of cross shell incompatibility
+::::::::::::::::::::::::::::::::::::::::
+
+A limiting factor of the eval commands is that, since they end up being sourced by the shell, what they output might not work if you switch shells. To try to help to mitigate a bit, the sub wrapper will load an environment variable with the name of the shell running the command. This is then available for the subcommand, and it can be used to determine the kind of output it wants to generate, considering it will be evaluated by a particular shell.
+
+The environment of subcommands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. TODO talk about the subdue.script module, which is loaded with the info from environment
 
