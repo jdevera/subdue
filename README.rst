@@ -519,6 +519,20 @@ The parameters of ``subdue.sub.main``
 - Line before summaries (These are the available subcommands for exa)
 - Summary formatter
 
+Roadmap
+-------
+
+#. Command execution
+#. Environment
+#. Builtin Commands: init
+#. Eval commands
+#. Builtin Commands: commands
+#. Completion
+#. Python library for subcommands
+#. Help handling
+#. Versioning
+#. Packaging
+#. Publishing
 
 
 Inspiration and history
