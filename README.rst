@@ -10,19 +10,19 @@ Subdue: Your Programs Under Control
 sub·due:
     *transitive verb* : to conquer and bring into subjection.
 
-Subdue is a very simple framework that enables you to quickly and easily create very powerful shell commands based on subcommands, like *git* or *svn*, that you run like this::
+Subdue is a simple framework that enables you to quickly and easily create very powerful shell commands based on subcommands, like *git* or *svn*, that you run like this::
 
     $ program subcommand [arguments]
 
 In subdue's terminology, such command is called a **sub**, and its subcommands are independent programs that are put together under one common directory. The main command (the **driver**) is responsible for launching those subcommands.
 
-Subdue gives the driver some super powers that can be harnessed with some collaboration from the subcommands, which can opt to adhere to certain conventions in order to take advantage of these. Some of these services are:
+Subdue gives the driver some super powers that can be harnessed with some collaboration from the subcommands themselves. Subcommands can choose to adhere to certain conventions in order to take advantage of these powers. Some of these services are:
 
  - Shell completion for subcommands
- - Usage text extraction
+ - Brief usage text extraction
  - Full help extraction and formatting
 
-Although *subdue* itself is written in Python, it is language agnostic when it comes to subcommands. Anything that can be executed can be a subcommand, be it a script, a binary or even a symlink!
+Although *subdue* itself is written in Python, it is language agnostic when it comes to subcommands. Anything that can be executed can be a subcommand, be it a script, a binary or even a symlink to any of those!
 
 .. contents:: Table of Contents
 
@@ -52,9 +52,9 @@ Run this command:
 
     $ subdue create SUB_NAME
 
-This creates a sub called SUB_NAME under the current directory and shows some useful information on what to do next.
+This creates a directory called SUB_NAME under the current directory and shows some useful information on what to do next. That directory *is* your sub.
 
-It is possible, for learning purposes, to create an example sub that comes preloaded with a series of dummy subcommands that shocase all the features in Subdue. To create such example sub, run this:
+It is possible, for learning purposes, to create an example sub that comes preloaded with a series of dummy subcommands that showcase all the features in Subdue. To create such example sub, run this:
 
 .. code:: bash
 
@@ -63,24 +63,24 @@ It is possible, for learning purposes, to create an example sub that comes prelo
 Setting up a sub
 ----------------
 
-Cd into the root directory of a sub and type:
+Once your sub is created, run:
 
 .. code:: bash
 
-    $ SUB_NAME init
+    $ SUB_NAME/bin/SUBNAME init
 
-This will show you the steps required to setup the sub. This normally involves adding a call to a special form of ``init`` from one of your shell's startup files. That call generates code for your shell that takes care of adding the directory of the main command to the ``PATH``. It also sets up shell completion and the *eval-command* feature described later in this document.
+This will show you the steps required to set up the sub. This normally involves adding a call to a special form of ``init`` from one of your shell's startup files. That call generates code for your shell that takes care of adding the directory of the main command to the ``PATH``. It also sets up shell completion and the *eval-command* feature described later in this document.
 
 .. Tip::
-    Alternatively, to gain some speed, you can choose to run the provided steps manually once and store their output in the shell startup file. This however has a drawback: any updates provided in subsequent versions of Subdue will not be applied.
+    Alternatively, to gain some speed, you can choose to run the provided steps manually once and store their output in the shell startup file. There is, however, a trade-off: If subsequent versions of subdue provide updates to the shell init code, you will not get them.
 
 Anatomy of a sub
 ----------------
 
-The following directories and files are contained in a *sub*'s directory:
+The following directories and files are contained in a *sub*:
 
 ``bin/``
-    This **optional** directory contains the main script for this *sub*, it has the same name as the *sub*
+    This **optional** directory contains the main script for this *sub*, which has the same name as the *sub*
 
 ``commands/``
     This directory contains the scripts or binaries (anything that can be executed) that will be exposed as subcommands of the *sub*. It can also contain other directories, which will be considered as **subcommand containers**.
@@ -89,7 +89,7 @@ The following directories and files are contained in a *sub*'s directory:
     This directory holds helper scripts or binaries that are used by the subcommands in the sub, but are however not exposed as subcommands themselves.  It is added to the ``PATH`` in the environment under which subcommands are run.
 
 ``share/``
-    User location for files that are not executable
+    User location for files that are not executable. An environment variable exposes this location to the subcommands.
 
 
 Adding subcommands
@@ -123,7 +123,7 @@ The default sub driver generated contains only three lines:
     from subdue.sub import main
     main()
 
-This assumes the script lives in the ``bin`` subdirectory inside the sub's directory. However, this is not compulsory, any path can be passed to the ``main`` function using the keyword argument ``subpath`` and then the driver will look for all the expected sub contents to be under that path.
+This assumes the script lives in the ``bin`` subdirectory inside the sub's directory. However, this is not compulsory, any path can be passed to the ``main`` function using the keyword argument ``sub_path`` and then the driver will look for all the expected sub contents to be under that path.
 
 For example, we might have a sub driver called ``foo`` under ``/usr/local/bin/foo`` but store the sub contents under ``/usr/local/lib/subs/foo``. These would be the contents of ``foo``:
 
@@ -131,13 +131,13 @@ For example, we might have a sub driver called ``foo`` under ``/usr/local/bin/fo
 
     #!/usr/bin/env python
     from subdue.sub import main
-    main(subpath='/usr/local/lib/subs/foo')
+    main(sub_path='/usr/local/lib/subs/foo')
 
 
 What the framework provides
 ---------------------------
 
-On top of simply running subcommands through a driver, the subdue framework provides a lot more extra value to subcommands:
+On top of simply running subcommands through a driver, the Subdue framework provides a lot more extra value to subcommands:
 
 - Certain directories in the path (the one where the driver is and ``lib``)
 - Completion for subcommands (if commands declare that they provide it)
@@ -147,7 +147,7 @@ On top of simply running subcommands through a driver, the subdue framework prov
 - General information to subcommands through environment variables
 - Some default subcommands, like init or help, that you don't have to implement
 - A library of some useful tools to use in subcommands if you happen to be
-  writting them in bash or python.
+  writing them in bash or python.
 
 All those will now be covered, all the examples assume an example sub called *exa* has been created and that the current directory is inside the sub:
 
@@ -159,11 +159,11 @@ All those will now be covered, all the examples assume an example sub called *ex
 The path available to subcommands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Subcommands receive the same ``$PATH`` as the calling shell, plus two additional directories that added by Subdue.
+Subcommands receive the same ``$PATH`` as the calling shell, but augmented by Subdue with two additional directories.
 
 First is the directory where the driver is.  This directory is added to the start of the ``$PATH`` and is intended to allow subcommands call other subcommands.
 
-Second is the ``bin/`` directory inside the sub. This is so that helper program that are stored there can be called directly from subcommands.
+Second is the ``lib/`` directory inside the sub. This is so that helper programs that are stored there can be called directly from subcommands. The programs under ``lib`` are however not exposed as subcommands.
 
 Usage, Summaries, and Help Text extraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -238,7 +238,7 @@ All trailing spaces, leading spaces and comment hashes are removed and the resul
 Documentation for subcommand containers
 :::::::::::::::::::::::::::::::::::::::
 
-Subcommand containers are directories and as such, cannot follow any of the comment convention outlined above. To circunvent this, Subdue reads all the documentation for subcommand containers from a file called ``doc.txt`` that sits directly under the container.
+Subcommand containers are directories and as such, cannot follow any of the comment convention outlined above. To circumvent this, Subdue reads all the documentation for subcommand containers from a file called ``doc.txt`` that sits directly under the container.
 
 The same conventions outlined above apply. However, since a subcommand container cannot contain options, its usage, if not specified in the file ``doc.txt``, will be generalised as::
 
@@ -264,7 +264,7 @@ There can also be a ``doc.txt`` file directly under the ``commands/`` directory 
 Variable expansion in extracted documentation
 :::::::::::::::::::::::::::::::::::::::::::::
 
-Subdue supports variable expansion in all extracted documentation. By default, only the string ``%COMMAND%`` is expanded to the tokens that form the command, starting with the sub name, followed by all the leading subcommand containers, if any, and ending with the current subcommand name. For instance, a hipotetical subcommand located under ``commands/this/is/an/example`` in the sub called exa would get the string "``%COMMAND%``" replaced with "``exa this is an example``".
+Subdue supports variable expansion in all extracted documentation. By default, only the string ``%COMMAND%`` is expanded to the tokens that form the command, starting with the sub name, followed by all the leading subcommand containers, if any, and ending with the current subcommand name. For instance, a hypothetical subcommand located under ``commands/this/is/an/example`` in the sub called exa would get the string "``%COMMAND%``" replaced with "``exa this is an example``".
 
 This feature is intended to decouple the documentation contents of a subcommand from its location. This will cover the case where a symlink is created to provide an alias, since the help text for alias will then include the name of the alias, rather than the original command.
 
@@ -283,7 +283,7 @@ The callable is given the following arguments:
 - The full path of the sub root directory
 - The path of the command, relative to the sub's root
 - The number of rows in the current shell
-- The number of colums in the current shell
+- The number of colunms in the current shell
 - A boolean indicating if the subcommand is an *eval-command*
 
 For reference, a callable that mirrors the behaviour of the default ``%COMMAND%`` expansion would be:
@@ -302,6 +302,8 @@ For reference, a callable that mirrors the behaviour of the default ``%COMMAND%`
 
 .. Caution::
     Although possible, overloading the expansion for ``COMMAND`` can be confusing.
+
+.. TODO: Rething this. Perhaps it's better to provide a help processor that gets the whole string and returns the transformed string.
 
 The built-in *help* subcommand
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -338,13 +340,13 @@ The ``help`` subcommand can be called with no arguments to provide a top level o
 
 This is where each part of this output comes from:
 
- - The Usage line is autogenerated and it is common for all subs
+ - The Usage line is automatically generated and it is common for all subs
  - The banner comes from the sub's main ``doc.txt`` under the ``commands/`` directory.
  - The line "These are the available..." is also common for all subs, it precedes a summary of the subcommands.
  - The subcommand summaries, as extracted from the subcommand files. If a subcommand does not provide a summary, a double hyphen ``--`` is shown in place of the summary.
  - The "See 'exa help <command>'..." line is also common for all subs.
     
-The help command can alternatively be folowed by a subcommand in order to get help for it::
+The help command can alternatively be followed by a subcommand in order to get help for it::
 
     $ exa help foo
     Usage: exa foo [-e] [-o file]
@@ -381,7 +383,7 @@ The behaviour of the help command is highly configurable. The following *switche
 - Override the default line that precedes the command summaries
 - Override the name of the file where documentation for subcommand containers is stored (by default it is ``doc.txt``)
 - Provide a callable to format the summary lines (gets all lines as a list of tuples with (name, summary or None, True if container else False))
-- Provide a callable to format the long help text (this can be used to parse some markup and could allow writing help text in, for example, Markdown)
+- Provide a callable to format the long help text (this can be used to parse some mark-up and could allow writing help text in, for example, Markdown)
 
 .. TODO Design the API for these
 
@@ -403,9 +405,15 @@ Subdue provides shell completion at the driver level out of the box. This means 
 Notable differences with other subcommand based commands
 --------------------------------------------------------
 
-Other subcommand based commands like git or any sub created using 37signal's sub scan all the directories in the path looking for executable files that start with the name of the main command. Subdue does not do that. A subcommand must be included explicitly.
+Other subcommand based commands like git or any sub created using 37signal's sub scan all the directories in the ``$PATH`` looking for executable files that start with the name of the main command. Subdue does not do that. A subcommand must be included explicitly.
 
-TODO: Provide an option (argument in main) to enable this?
+Subdue supports multiple subcommand levels.
+
+Subdue is highly configurable
+
+Subdue holds the core separately so that it can be updated independently.
+
+.. TODO Provide an option (argument in main) to enable this?
 
 The parameters of ``subdue.sub.main``
 -------------------------------------
@@ -421,7 +429,7 @@ Subdue is mainly inspired in a project called "sub" by 37 Signals. I started usi
 
 I wanted to add some more features to the very simple 'sub' project, but since it had already become much more than a script gluing a couple of commands together, I ditched shell scripting and started a rewrite in Python.
 
-The overall structure was the same, there was a main monolithic file that had all the logic and it lived within the sub. This turned out to be a problem when I started to create more and more subs, since I found myself symlinking all their drivers to the development repository in my box. This made me realised that it would be better to make the drivers a thin layer on top of a powerful central framework that one can upgrade once and take advantage of everywhere instantaneously.
+The overall structure was the same, there was a main monolithic file that had all the logic and it lived within the sub. This turned out to be a problem when I started to create more and more subs, since I found myself symlinking all their drivers to the development repository in my box. Such pattern made me realise that it would be better to make the drivers a thin layer on top of a powerful central framework that one can upgrade once and take advantage of everywhere instantaneously.
 
 This meant a big redesign of everything from scratch, hence the start of a new project with a new name: Subdue, with the idea that it will help bring a collection of little scripts under the control of a meaningful common parent.
 
