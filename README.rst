@@ -423,6 +423,32 @@ A limiting factor of the eval commands is that, since they end up being sourced 
 The environment of subcommands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+All subcommands in a sub receive the following information in form of environment variables:
+
+``_SUB_NAME_``
+  Contains the name of the sub.
+
+``_SUB_COMMAND_``
+  Contains the token of the current command, excluding the arguments.
+
+``_SUB_PATH_COMMAND_``
+  Contains the full path to the current command being executed.
+
+``_SUB_PATH_ROOT_``
+  Contains the full path to the root of the sub that the command is running on.
+
+``_SUB_PATH_SHARED_``
+  Contains the full path to the shared directory in the sub. Even when this can be apparently derived from ``_SUB_PATH_ROOT_``, prefer to use this variable directly.
+
+``_SUB_PATH_LIB_``
+  Contains the full path to the lib directory in the sub. Even when this can be apparently derived from ``_SUB_PATH_ROOT_``, prefer to use this variable directly.
+
+``_SUB_IS_EVAL_``
+  If the command is being run as an eval command, that is, if the driver had to add the eval command prefix (by default ``-sh``) to the last command token in order to find the script, then this variable has a value of 1. Otherwise it is 0.
+
+``_SUB_SHELL``
+  The name of the shell that invoked the driver. This variable is available only when using the functional shell wrapper and it is only meaningful in eval commands.
+
 .. TODO talk about the subdue.script module, which is loaded with the info from environment
 
 Shell Completion
