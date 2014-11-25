@@ -510,6 +510,15 @@ The parameters of ``subdue.sub.main``
 
 .. function: main([argv=None, root_path=None, command_runner=None])
 
+- The path to the root
+- The command runner
+- The prefix for eval commands ('sh-')
+- The extension for completers ('subduecompleter')
+- The help file extension ('helptext')
+- Help processor: Code that takes the help text and reformats it (DefaultHelpProcessor)
+- Line before summaries (These are the available subcommands for exa)
+- Summary formatter
+
 
 
 Inspiration and history
