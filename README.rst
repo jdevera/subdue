@@ -446,7 +446,7 @@ All subcommands in a sub receive the following information in form of environmen
 ``_SUB_IS_EVAL_``
   If the command is being run as an eval command, that is, if the driver had to add the eval command prefix (by default ``-sh``) to the last command token in order to find the script, then this variable has a value of 1. Otherwise it is 0.
 
-``_SUB_SHELL``
+``_SUB_SHELL_``
   The name of the shell that invoked the driver. This variable is available only when using the functional shell wrapper and it is only meaningful in eval commands.
 
 .. TODO talk about the subdue.script module, which is loaded with the info from environment
@@ -510,7 +510,7 @@ The parameters of ``subdue.sub.main``
 
 .. function: main([argv=None, root_path=None, command_runner=None])
 
-- The path to the root
+- The path to the root: sub_path
 - The command runner
 - The prefix for eval commands ('sh-')
 - The extension for completers ('subduecompleter')
