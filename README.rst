@@ -522,8 +522,8 @@ The parameters of ``subdue.sub.main``
 Roadmap
 -------
 
-#. Command execution
-#. Environment
+#. ✓ Command execution
+#. ✓ Environment
 #. Builtin Commands: commands
 #. Builtin Commands: init
 #. Completion
