@@ -160,17 +160,18 @@ class TempSub(TemporaryDirectory):
 
             def assertSucess(self, msg=None):
                 self.testcase.assertEqual(self.return_code, 0,
-                    msg if msg is not None else 'Expected success (rc = 0) but failed with rc: {}'.format(self.return_code))
+                    msg if msg is not None else 'Expected success (rc = 0) but failed with rc: {}. STDERR: {}'.format(self.return_code, self.stderr))
                 return self
 
             def assertFailure(self, msg=None):
                 self.testcase.assertNotEqual(self.return_code, 0,
-                    msg if msg is not None else 'Expected failure (rc = 0) but succeeded with rc: {}'.format(self.return_code))
+                    msg if msg is not None else 'Expected failure (rc = 0) but succeeded with rc: {}. STDERR: {}'.format(self.return_code, self.stderr))
                 return self
 
         class Command(object):
             def __init__(self, parent, command):
                 self.command = list(command.split('/'))
+                """List of command tokens"""
                 self.sub = parent
 
             def run_it(self, *args):
@@ -181,14 +182,22 @@ class TempSub(TemporaryDirectory):
             self.sub_root = parent.subroot
             self.name = parent.subname
             self.testcase = parent.testcase
+            self.thin = parent.thin
 
         def create_subcommand(self, name, interpreter='sh', contents=''):
             create_subcommand(self.sub_root, name, contents, interpreter)
             return TempSub.Sub.Command(self, name)
 
         def run(self, *args):
+            args = list(args)
             with TempSub.Sub.OutCapture(self) as cap:
-                rc = call_driver(self.sub_root, list(args))
+                if self.thin:
+                    # Don't use exec or we'll ruin the tests:
+                    caller = SubprocessCaller()
+                    subdue.sub.main(args, sub_path=self.sub_root, exit=False, command_runner=caller)
+                    rc = caller.returncode
+                else:
+                    rc = call_driver_for(self.sub_root, args)
             cap.return_code = rc
             cap.command = args
             return cap
@@ -198,6 +207,7 @@ class TempSub(TemporaryDirectory):
         self.testcase = testcase
         self.subname = name
         self.subroot = os.path.join(self.name, self.subname)
+        self.thin = thin
 
     def __enter__(self):
         super(TempSub, self).__enter__()
@@ -297,12 +307,15 @@ def create_subcommand(sub_root, name, contents, interpreter=None):
         cmdfile.write(contents)
     os.chmod(sub_command_file, 448) # 0700, for python 2.7 vs 3.X compat
 
-def call_driver(sub_root, args=None, **kwargs):
+
+def call_driver_for(sub_root, args=None, **kwargs):
     if args is None:
         args = []
     sub_name = os.path.basename(sub_root)
     sub_driver = os.path.join(sub_root, 'bin', sub_name)
+    return call_driver(sub_driver, args, **kwargs)
 
+def call_driver(sub_driver, args=None, **kwargs):
     # Get the environment and add the subdue path to the PYTHONPATH
     env = kwargs.get('env', os.environ).copy()
     subdue_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -312,3 +325,10 @@ def call_driver(sub_root, args=None, **kwargs):
     return_code = subprocess_call([sub_driver] + args, **kwargs)
     return return_code
 
+def call_thin(sub_root, args=None, **kwargs):
+    if args is None:
+        args = []
+    # Don't use exec or we'll ruin the tests:
+    caller = SubprocessCaller()
+    subdue.sub.main(args, sub_path=sub_root, exit=False, command_runner=caller)
+    return caller.returncode

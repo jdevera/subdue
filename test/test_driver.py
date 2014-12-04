@@ -60,7 +60,7 @@ class TestDriverMain(SubdueTestCase):
                 """)
 
             with OutStreamCheckedCapture(self) as cap:
-                return_code = utils.call_driver(sub_root, ['mycommand'])
+                return_code = utils.call_driver_for(sub_root, ['mycommand'])
 
             self.assertEqual(return_code, 0, "Return code ({}) != expected ({}). Capture: {}".format(return_code, 0, cap))
             cap.stdout.matches(r"^This is foo\n")
@@ -70,7 +70,7 @@ class TestDriverOptions(SubdueTestCase):
 
     def _checkEval(self, sub_root, expected_rc, command):
         with OutStreamCheckedCapture(self) as cap:
-            return_code = utils.call_driver(sub_root, ['--is-eval', command])
+            return_code = utils.call_driver_for(sub_root, ['--is-eval', command])
 
         self.assertEqual(return_code, expected_rc,
                 "--is-eval returned {} for command {}, but expected {}. Capture: {}".format(
