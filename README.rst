@@ -519,6 +519,12 @@ The parameters of ``subdue.sub.main``
 - Line before summaries (These are the available subcommands for exa)
 - Summary formatter
 
+FAQ
+---
+
+#. What if I really want a command that starts with ``sh-`` but it is not an eval command?
+
+
 Roadmap
 -------
 
