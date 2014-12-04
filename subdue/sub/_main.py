@@ -353,17 +353,7 @@ def do_main(argv=None, **kwargs):
         sys.exit("{0}: can't run a container `{1}'".format(paths.name, command.command))
         return 1
 
-    # -------------------------------------------------------------------------
-    # Not sure about this, perhaps it should be only the first condition. Is
-    # there a value for a command called sh-com to tell appart the case where
-    # it was invoked as sub com or sub sh-com? (Already the first case wil eval
-    # the output and the second won't)
-    #
-    # If it doesn't matter, I could replace these two properties with just one
-    # that looks at the basename of the command's path to find the prefix
-    # there.
-    # -------------------------------------------------------------------------
-    if command.found_with_sh or command.is_eval:
+    if command.found_with_sh:
         env.is_eval = 1
 
     env.command = command.command   # _SUB_COMMAND_
