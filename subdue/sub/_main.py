@@ -58,7 +58,7 @@ class Environment(object):
 
     class SubVar(object):
         def __init__(self, name, value):
-            self.name = "_SUB_{varname}".format(varname=name)
+            self.name = "_SUB_{varname}_".format(varname=name)
             self.value = value
         def __str__(self):
             return "{self.name}={self.value}".format(self=self)
