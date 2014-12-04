@@ -274,10 +274,10 @@ def command_help():
     print ("subdue help")
     return True
 
-def find_builtin_command(args):
+def find_builtin_command(args, paths):
     cmd = builtincmd.registry.get(args[0], None)
     if cmd is not None:
-        return cmd()
+        return cmd(args, paths)
 
 def execvp_runner(args):
     os.execvp(args[0], args)
@@ -340,9 +340,9 @@ def do_main(argv=None, **kwargs):
     env.prepend_to_path(paths.lib)
     env.prepend_to_path(paths.bin)
 
-    internal_command = find_builtin_command(args.args)
+    internal_command = find_builtin_command(args.args, paths)
     if internal_command is not None:
-        return internal_command(args.args)
+        return internal_command()
 
     # Try finding the command under the commands directory of the sub
     command = find_command_path(args.args, paths)
