@@ -387,6 +387,11 @@ The behaviour of the help command is highly configurable. The following *switche
 
 .. TODO Design the API for these
 
+The built-in *commands* subcommand
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There is a very simple built-in command called ``commands``, which will simply list all found commands in a sub. You can optionally give it a command container and it will list all subcommands.
+
 The eval-command feature
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
