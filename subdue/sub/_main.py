@@ -97,7 +97,7 @@ class Environment(object):
         return self.vars.get(name.lower(), None)
 
     def __str__(self):
-        return ", ".join(("{0}:[{1.name}={1.value}]".format(k, v) for k,v in self.vars.iteritems()))
+        return ", ".join(("{0}:[{1.name}={1.value}]".format(k, v) for k,v in self.vars.items()))
 
 
     def save(self):
