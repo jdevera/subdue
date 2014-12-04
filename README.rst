@@ -2,7 +2,7 @@
 .. image:: https://travis-ci.org/jdevera/subdue.png?branch=master
     :target: https://travis-ci.org/jdevera/subdue
 
-**Warning**: This project is currently in a documentation writing phase **before development**.
+**Status**: This project is in early development stage. See the Roadmap below to find out what has been implemented.
 
 Subdue: Your Programs Under Control
 ===================================
