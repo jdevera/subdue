@@ -20,6 +20,7 @@ class SubPaths(object):
         self.root = os.path.dirname(self.bin) if root is None else root
         self.commands = os.path.join(self.root, 'commands')
         self.lib = os.path.join(self.root, 'lib')
+        self.shared = os.path.join(self.root, 'shared')
 
     @staticmethod
     def _find_calling_script():
@@ -43,7 +44,7 @@ class SubPaths(object):
             """.format(self)
 
 
-class EnvProv(object):
+class EnvProp(object):
     def __init__(self, name, doc=None):
         self.name = name
 
@@ -67,9 +68,12 @@ class Environment(object):
         self.vars = {}
         self.path = os.environ['PATH'].split(':')
 
-        self.root = paths.root
-        self.is_eval = 0
+        self.name = paths.name
         self.command = ''
+        self.path_root = paths.root
+        self.path_shared = paths.shared
+        self.path_lib = paths.lib
+        self.is_eval = 0
 
     def prepend_to_path(self, path, immediate=False):
         self.path.insert(0, path)
@@ -91,7 +95,7 @@ class Environment(object):
         self.vars[name.lower()] = Environment.SubVar(self.subname_u, name.upper(), value)
 
     def _get(self, name):
-        return self.vars[name.lower()]
+        return self.vars.get(name.lower(), None)
 
     def __str__(self):
         return ", ".join(("{0}:[{1.name}={1.value}]".format(k, v) for k,v in self.vars.iteritems()))
@@ -102,9 +106,15 @@ class Environment(object):
             os.environ[var.name] = var.value
         self._apply_path()
 
-    command = EnvProv('command')
-    root = EnvProv('root')
-    is_eval = EnvProv('is_eval')
+    name = EnvProp('name')
+    command = EnvProp('command')
+    path_command = EnvProp('path_command')
+    path_root = EnvProp('path_root')
+    path_shared = EnvProp('path_shared')
+    path_lib = EnvProp('path_lib')
+    is_eval = EnvProp('is_eval')
+    shell = EnvProp('shell')
+
 
 
 class Command(object):
@@ -141,10 +151,16 @@ class Command(object):
 
     @property
     def is_eval(self):
+        """
+        True if the command's last token has the eval prefix explicitly
+        """
         return self.tokens[-1].startswith('sh-')
 
     @property
     def found_with_sh(self):
+        """
+        True if the eval preix was added before the command could be found
+        """
         return self.is_sh
 
     @property
@@ -269,6 +285,8 @@ def parse_args(argv):
     """ Parse and validate command line arguments """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--is-eval", action='store_true')
+    # The shell function wrapper will use this to inform the driver about the shell:
+    parser.add_argument("--shell", help=argparse.SUPPRESS)
     parser.add_argument("-h", "--help", action='store_true')
     parser.add_argument("args", nargs=argparse.REMAINDER)
 
@@ -296,23 +314,36 @@ def do_main(argv=None, **kwargs):
     :param callable command_runner: A callable to run the found command script
 
     """
+
+    # Parse command line arguments
     if argv is None:
         argv = sys.argv[1:]
     args = parse_args(argv)
 
+    # Check for the -h or --help option, or no arguments at all: That should
+    # print help
     if args.help or not args.args:
         return bool_to_rc(command_help())
 
+    # Derive all necessary paths
     paths = SubPaths(kwargs.get('sub_path'))
-    env = Environment(paths)
-    api_runner = kwargs.get('command_runner', execvp_runner)
 
-    # env.prepend_to_path(paths.lib)
-    # env.prepend_to_path(paths.bin)
+    # Sets _SUB_NAME, _SUB_PATH_ROOT_, _SUB_PATH_LIB_, _SUB_PATH_SHARED_
+    env = Environment(paths)
+    if args.shell:
+        env.shell = args.shell # Sets _SUB_SHELL_
+
+    env.prepend_to_path(paths.lib)
+    env.prepend_to_path(paths.bin)
 
     # TODO: Try internal command here
 
+    # Try finding the command under the commands directory of the sub
     command = find_command_path(args.args, paths)
+
+    # If we are querying for eval commands, say NO even when the command is not
+    # found. This will probably be folowed by a normal cal to the command,
+    # which will result in the error below.
     if args.is_eval:
         return bool_to_rc(command.found and command.found_with_sh)
 
@@ -324,12 +355,26 @@ def do_main(argv=None, **kwargs):
         sys.exit("{0}: can't run a container `{1}'".format(paths.name, command.command))
         return 1
 
+    # -------------------------------------------------------------------------
+    # Not sure about this, perhaps it should be only the first condition. Is
+    # there a value for a command called sh-com to tell appart the case where
+    # it was invoked as sub com or sub sh-com? (Already the first case wil eval
+    # the output and the second won't)
+    #
+    # If it doesn't matter, I could replace these two properties with just one
+    # that looks at the basename of the command's path to find the prefix
+    # there.
+    # -------------------------------------------------------------------------
     if command.found_with_sh or command.is_eval:
         env.is_eval = 1
 
-    env.command = command.command
+    env.command = command.command   # _SUB_COMMAND_
+    env.path_command = command.path # _SUB_PATH_COMMAND_
+
+    # This will commit all environment changes to the real environment
     env.save()
 
+    api_runner = kwargs.get('command_runner', execvp_runner)
     command.run_with(api_runner)
 
 
