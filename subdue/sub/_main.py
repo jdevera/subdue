@@ -10,6 +10,7 @@ import inspect
 import argparse
 
 from subdue.core import compat
+from subdue import builtincmd
 
 class SubPaths(object):
     def __init__(self, root=None):
@@ -273,6 +274,11 @@ def command_help():
     print ("subdue help")
     return True
 
+def find_builtin_command(args):
+    cmd = builtincmd.registry.get(args[0], None)
+    if cmd is not None:
+        return cmd()
+
 def execvp_runner(args):
     os.execvp(args[0], args)
 
@@ -334,7 +340,9 @@ def do_main(argv=None, **kwargs):
     env.prepend_to_path(paths.lib)
     env.prepend_to_path(paths.bin)
 
-    # TODO: Try internal command here
+    internal_command = find_builtin_command(args.args)
+    if internal_command is not None:
+        return internal_command(args.args)
 
     # Try finding the command under the commands directory of the sub
     command = find_command_path(args.args, paths)
