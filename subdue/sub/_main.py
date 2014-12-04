@@ -57,14 +57,13 @@ class EnvProp(object):
 class Environment(object):
 
     class SubVar(object):
-        def __init__(self, subname, name, value):
-            self.name = "_{subname}_{varname}".format(subname=subname, varname=name)
+        def __init__(self, name, value):
+            self.name = "_SUB_{varname}".format(varname=name)
             self.value = value
         def __str__(self):
             return "{self.name}={self.value}".format(self=self)
 
     def __init__(self, paths):
-        self.subname_u = paths.name.upper()
         self.vars = {}
         self.path = os.environ['PATH'].split(':')
 
@@ -92,7 +91,7 @@ class Environment(object):
     def _set(self, name, value):
         if value is not None:
             value = compat.unicode(value)
-        self.vars[name.lower()] = Environment.SubVar(self.subname_u, name.upper(), value)
+        self.vars[name.lower()] = Environment.SubVar(name.upper(), value)
 
     def _get(self, name):
         return self.vars.get(name.lower(), None)
@@ -330,8 +329,7 @@ def do_main(argv=None, **kwargs):
 
     # Sets _SUB_NAME, _SUB_PATH_ROOT_, _SUB_PATH_LIB_, _SUB_PATH_SHARED_
     env = Environment(paths)
-    if args.shell:
-        env.shell = args.shell # Sets _SUB_SHELL_
+    env.shell = args.shell or '' # Sets _SUB_SHELL_
 
     env.prepend_to_path(paths.lib)
     env.prepend_to_path(paths.bin)
