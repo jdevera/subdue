@@ -524,10 +524,10 @@ Roadmap
 
 #. Command execution
 #. Environment
-#. Builtin Commands: init
-#. Eval commands
 #. Builtin Commands: commands
+#. Builtin Commands: init
 #. Completion
+#. Eval commands
 #. Python library for subcommands
 #. Help handling
 #. Versioning
