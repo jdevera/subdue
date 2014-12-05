@@ -24,13 +24,26 @@ class TextChecker(compat.UnicodeMixin):
         self.text = text
         self.tc = testcase
 
-    def matches(self, pattern):
+    def anchor_pattern(self, pattern):
+        new_pattern = [pattern]
+        if not pattern.startswith('^'):
+            new_pattern.insert(0, r'^')
+        if not pattern.endswith('$'):
+            new_pattern.append(r'$')
+        return ''.join(new_pattern)
+
+
+    def matches(self, pattern, anchored=False):
+        if anchored:
+            pattern = self.anchor_pattern(pattern)
         assertRegex = getattr(self.tc, 'assertRegex',
                               self.tc.assertRegexpMatches)
         assertRegex(self.text, pattern)
         return self
 
-    def not_matches(self, pattern):
+    def not_matches(self, pattern, anchored=False):
+        if anchored:
+            pattern = self.anchor_pattern(pattern)
         assertNotRegex = getattr(self.tc, 'assertNotRegex',
                                  self.tc.assertNotRegexpMatches)
         assertNotRegex(self.text, pattern)
