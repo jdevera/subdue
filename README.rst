@@ -535,7 +535,7 @@ Roadmap
 
 #. ✓ Command execution
 #. ✓ Environment
-#. Builtin Commands: commands
+#. ✓ Builtin Commands: commands
 #. Builtin Commands: init
 #. Completion
 #. Eval commands
