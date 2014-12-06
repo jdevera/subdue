@@ -17,7 +17,7 @@ class TestDriverMain(SubdueTestCase):
         """
         with OutStreamCheckedCapture(self) as cap:
             subdue.sub.main([], exit=False)
-        cap.stdout.contains("subdue help")
+        cap.stdout.contains("built-in command: help not yet implemented")
 
     def test_top_level_launch_thin(self):
         """

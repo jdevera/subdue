@@ -270,14 +270,14 @@ def path_prepend(directory):
     """
     os.environ['PATH'] = ":".join((directory, os.environ['PATH']))
 
-def command_help():
-    print ("subdue help")
-    return True
 
 def find_builtin_command(args, paths):
-    cmd = builtincmd.registry.get(args[0], None)
+    cmd = builtincmd.find(args[0])
     if cmd is not None:
         return cmd(args, paths)
+
+def command_help():
+    return True
 
 def execvp_runner(args):
     os.execvp(args[0], args)
@@ -325,13 +325,15 @@ def do_main(argv=None, **kwargs):
         argv = sys.argv[1:]
     args = parse_args(argv)
 
+    # Derive all necessary paths
+    paths = SubPaths(kwargs.get('sub_path'))
+
     # Check for the -h or --help option, or no arguments at all: That should
     # print help
     if args.help or not args.args:
-        return bool_to_rc(command_help())
-
-    # Derive all necessary paths
-    paths = SubPaths(kwargs.get('sub_path'))
+        help_cmd = find_builtin_command(['help'], paths)
+        help_cmd()
+        return 0
 
     # Sets _SUB_NAME, _SUB_PATH_ROOT_, _SUB_PATH_LIB_, _SUB_PATH_SHARED_
     env = Environment(paths)
@@ -348,7 +350,7 @@ def do_main(argv=None, **kwargs):
     command = find_command_path(args.args, paths)
 
     # If we are querying for eval commands, say NO even when the command is not
-    # found. This will probably be folowed by a normal cal to the command,
+    # found. This will probably be folowed by a normal call to the command,
     # which will result in the error below.
     if args.is_eval:
         return bool_to_rc(command.found and command.found_with_sh)
