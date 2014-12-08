@@ -15,9 +15,9 @@ from subdue import builtincmd
 class SubPaths(object):
     def __init__(self, root=None):
         # print __file__
-        calling_script = self._find_calling_script()
-        self.name = os.path.basename(calling_script)
-        self.bin = os.path.dirname(os.path.abspath(calling_script))
+        self.calling_script = self._find_calling_script()
+        self.name = os.path.basename(self.calling_script)
+        self.bin = os.path.dirname(os.path.abspath(self.calling_script))
         self.root = os.path.dirname(self.bin) if root is None else root
         self.commands = os.path.join(self.root, 'commands')
         self.lib = os.path.join(self.root, 'lib')
