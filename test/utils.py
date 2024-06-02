@@ -9,22 +9,22 @@ import tempfile
 import shutil
 import subprocess
 import textwrap
+import io
 
 import subdue
-from subdue.core import compat
 from .compat import which
 
 __unittest = None
 
 
-
-class TextChecker(compat.UnicodeMixin):
+class TextChecker:
 
     def __init__(self, testcase, text):
         self.text = text
         self.tc = testcase
 
-    def anchor_pattern(self, pattern):
+    @staticmethod
+    def anchor_pattern(pattern):
         new_pattern = [pattern]
         if not pattern.startswith('^'):
             new_pattern.insert(0, r'^')
@@ -36,17 +36,13 @@ class TextChecker(compat.UnicodeMixin):
     def matches(self, pattern, anchored=False):
         if anchored:
             pattern = self.anchor_pattern(pattern)
-        assertRegex = getattr(self.tc, 'assertRegex',
-                              self.tc.assertRegexpMatches)
-        assertRegex(self.text, pattern)
+        self.tc.assertRegex(self.text, pattern)
         return self
 
     def not_matches(self, pattern, anchored=False):
         if anchored:
             pattern = self.anchor_pattern(pattern)
-        assertNotRegex = getattr(self.tc, 'assertNotRegex',
-                                 self.tc.assertNotRegexpMatches)
-        assertNotRegex(self.text, pattern)
+        self.tc.assertNotRegex(self.text, pattern)
         return self
 
     def contains(self, pattern, times=None):
@@ -97,8 +93,7 @@ class TemporaryDirectory(object):
         shutil.rmtree(self.name)
 
 
-
-class OutStreamCapture(compat.UnicodeMixin):
+class OutStreamCapture:
     """
     A context manager to replace stdout and stderr with StringIO objects and
     cache all output.
@@ -113,8 +108,8 @@ class OutStreamCapture(compat.UnicodeMixin):
     def __enter__(self):
         self._stdout = sys.stdout
         self._stderr = sys.stderr
-        sys.stdout = compat.StringIO()
-        sys.stderr = compat.StringIO()
+        sys.stdout = io.StringIO()
+        sys.stderr = io.StringIO()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -128,14 +123,13 @@ class OutStreamCapture(compat.UnicodeMixin):
         sys.stdout = self._stdout
         sys.stderr = self._stderr
 
-    def __unicode__(self):
+    def __str__(self):
         return "\n".join([
             'STDOUT:',
-            compat.unicode(self.stdout),
+            str(self.stdout),
             'STDERR:',
-            compat.unicode(self.stderr)
+            str(self.stderr)
             ])
-
 
 
 class OutStreamCheckedCapture(OutStreamCapture):
@@ -227,8 +221,6 @@ class TempSub(TemporaryDirectory):
         with OutStreamCapture():
             subdue.main(['subdue', 'new', self.subname])
         return TempSub.Sub(self)
-
-
 
 
 class SubdueTestCase(unittest.TestCase):

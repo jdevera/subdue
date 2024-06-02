@@ -9,7 +9,6 @@ import sys
 import inspect
 import argparse
 
-from subdue.core import compat
 from subdue import builtincmd
 
 class SubPaths(object):
@@ -55,9 +54,9 @@ class EnvProp(object):
     def __set__(self, obj, val):
         obj._set(self.name, val)
 
-class Environment(object):
+class Environment:
 
-    class SubVar(object):
+    class SubVar:
         def __init__(self, name, value):
             self.name = "_SUB_{varname}_".format(varname=name)
             self.value = value
@@ -91,7 +90,7 @@ class Environment(object):
 
     def _set(self, name, value):
         if value is not None:
-            value = compat.unicode(value)
+            value = str(value)
         self.vars[name.lower()] = Environment.SubVar(name.upper(), value)
 
     def _get(self, name):
@@ -102,7 +101,7 @@ class Environment(object):
 
 
     def save(self):
-        for var in compat.itervalues(self.vars):
+        for var in self.vars.values():
             os.environ[var.name] = var.value
         self._apply_path()
 

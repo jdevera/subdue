@@ -28,6 +28,7 @@ SUB_ENV_VARS = sorted([
     '_SUB_SHELL_'
     ])
 
+
 class TestEnvironmentVariables(SubdueTestCase):
 
     def test_all_vars(self):
@@ -37,7 +38,7 @@ class TestEnvironmentVariables(SubdueTestCase):
                 ).run_it(
                 ).assertSucess(
                 ).stdout
-            env = json.loads(str(out))
+            env = json.loads(str(out.text))
 
         self.assertIsNotNone(env)
         self.assertIsInstance(env, dict)
@@ -77,11 +78,10 @@ class TestEnvironmentVariables(SubdueTestCase):
             out = s.create_subcommand('show', 'sh', 'echo "$PATH"'
                 ).run_it(
                 ).assertSucess(
-                ).stdout
+                ).stdout.text
             paths = str(out).split(':')
             self.assertEqual(os.path.join(s.sub_root, 'bin'), paths.pop(0))
             self.assertEqual(os.path.join(s.sub_root, 'lib'), paths.pop(0))
-
 
 
 class TestEnvironmentVariablesOnThinSub(SubdueTestCase):
@@ -92,7 +92,7 @@ class TestEnvironmentVariablesOnThinSub(SubdueTestCase):
             out = s.create_subcommand('status', 'python', SHOW_ENV_COMMAND
                 ).run_it(
                 ).assertSucess(
-                ).stdout
+                ).stdout.text
             env = json.loads(str(out))
 
         self.assertIsNotNone(env)

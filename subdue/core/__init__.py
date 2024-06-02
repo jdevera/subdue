@@ -4,12 +4,10 @@ __all__ = [
     'die',
     'verbose',
     'set_color_policy',
-    'compat'
 ]
 
 import sys as _sys
 from . import color as _color
-from . import compat
 
 BANNER = """\
            _         _
